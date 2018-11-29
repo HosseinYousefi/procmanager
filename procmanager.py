@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import os
-import psutil
+# import psutil
 
 class Command():
     def __init__(self, args):
@@ -17,7 +17,7 @@ class ListProcs(Command):
             if os.path.isdir(proc + "/" + d) and d.isdigit():
                 print(d)
                 
-class SendSignal(Command): // added by Marius
+class SendSignal(Command): # added by Marius
     def __init__(self, args):
         pass
 
@@ -29,31 +29,6 @@ class ShowStatus(Command):
 		if len(args) == 0:
 			raise Exception("No pid passed!")
 		self.ps = map(lambda pid: psutil.Process(int(pid)), args);
-
-class ListVars(Command):
-    def __init__(self, args):
-        self.args = args
-
-    def run(self):
-        keys = []
-        values = []
-        with open("/proc/" + self.args[0] + "/environ") as f:
-            vars = f.read().split('=')
-            for var in vars:
-                val = ''
-                key = ''
-                for v in var:
-                    if v.isupper():
-                        key += v
-                    else:
-                        val += v
-                keys.append(key)
-                if val:
-                    values.append(val.strip('\x00_'))
-        print(dict(zip(keys, values)))
-
-	def run(self):
-		print([p.status() for p in self.ps])
 
 class showMem:
     def __init__(self, args):
@@ -70,13 +45,24 @@ class showMem:
                 print (line[10:])
         if not exst: 
                 print ('No status')    
-                  
+
+
+class EnvVars(Command): # Hossein
+	def __init__(self, pid):
+		self.pid = pid[0]
+
+	def run(self):
+		with open(f"/proc/{self.pid}/environ") as f:
+			str = f.read().replace('\0', '\n')
+			print(str)
+
+
 commands = {
     "list" : lambda args: ListProcs(args),
     "show_status": lambda args: ShowStatus(args), 
-    "send_signal": lambda pid: SendSignal(pid) // added by Marius
-    "env"  : lambda args: ListVars(args)
-    "memory_usage": lambda args: showMem(args)
+    "send_signal": lambda pid: SendSignal(pid), # added by Marius
+    "memory_usage": lambda args: showMem(args),
+    "envvars": lambda pid: EnvVars(pid) # Hossein
 }
 
 def get_command():
